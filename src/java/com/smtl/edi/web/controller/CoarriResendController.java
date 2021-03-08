@@ -5,6 +5,7 @@ import com.smtl.edi.util.ValidationUtil;
 import com.smtl.edi.web.svc.UserService;
 import com.smtl.edi.util.StringUtil;
 import com.smtl.edi.vo.DateRange;
+import com.smtl.edi.vo.VesselVoyage;
 import java.io.UnsupportedEncodingException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 @RequestMapping("/coarri_resend")
 public class CoarriResendController {
-    
+
     @Autowired
     UserService userService;
 
@@ -36,7 +37,7 @@ public class CoarriResendController {
         model.addAttribute("users", userService.getAllCodes());
         return "coarri_resend";
     }
-    
+
     @Autowired
     JdbcTemplate jdbcTemplate;
 
@@ -51,7 +52,7 @@ public class CoarriResendController {
     @RequestMapping("/send")
     @ResponseBody
     public String send(HttpServletRequest request, Model model) throws UnsupportedEncodingException {
-        
+
         String cstcode = request.getParameter("cstcode");
         String cntrno = request.getParameter("cntrno");
         String typecheck = request.getParameter("typecheck");
@@ -59,16 +60,16 @@ public class CoarriResendController {
         String voyage = request.getParameter("voyage");
         String begin = request.getParameter("begin").replaceAll(" ", "").replaceAll("-", "").replaceAll(":", "");
         String end = request.getParameter("end").replaceAll(" ", "").replaceAll("-", "").replaceAll(":", "");
-        
+
         vslName = new String(vslName.getBytes("ISO8859_1"), "utf-8");
-        
+
         model.addAttribute("cstcode", cstcode);
         model.addAttribute("vslname", vslName);
         model.addAttribute("voyage", voyage);
         model.addAttribute("cntrno", cntrno);
         model.addAttribute("begin", begin);
         model.addAttribute("end", end);
-        
+
         String[] ctnNos = new String[0];
         if (StringUtil.isNotEmpty(cntrno)) {
             ctnNos = cntrno.trim().split(" ");
@@ -77,11 +78,11 @@ public class CoarriResendController {
         //根据船名航次发送报文
         if ("v".equalsIgnoreCase(typecheck)) {
             if (ValidationUtil.isValid(ctnNos)) {
-                return EDIRedo.coarriByVslNameAndVoyage0(cstcode, vslName, voyage, ctnNos);
+                return EDIRedo.coarriByVslNameAndVoyage0(cstcode, new VesselVoyage(vslName, voyage), ctnNos);
             } else {
-                return EDIRedo.coarriByVslNameAndVoyage0(cstcode, vslName, voyage);
+                return EDIRedo.coarriByVslNameAndVoyage0(cstcode, new VesselVoyage(vslName, voyage));
             }
-            
+
         }
         if ("t".equalsIgnoreCase(typecheck)) {
             if (ValidationUtil.isValid(ctnNos)) {
@@ -89,9 +90,9 @@ public class CoarriResendController {
             } else {
                 return EDIRedo.coarriByActTime(cstcode, new DateRange(begin, end));
             }
-            
+
         }
-        
+
         return "N";
     }
 }

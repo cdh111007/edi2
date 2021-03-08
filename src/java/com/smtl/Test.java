@@ -3,6 +3,7 @@ package com.smtl;
 import com.smtl.edi.util.DatetimeUtil;
 import com.smtl.edi.util.DbUtil;
 import static com.smtl.edi.util.StringUtil.buildSqlInClause;
+import com.smtl.edi.vo.VesselVoyage;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -36,7 +37,7 @@ public class Test {
 
                 while (rs.next()) {
                     System.out.println(rs.getString("vessel_namec") + "/" + rs.getString("voyage"));
-                    EDIRedo.coarriByVslNameAndVoyage0("xxzx", rs.getString("vessel_namec"), rs.getString("voyage"));
+                    EDIRedo.coarriByVslNameAndVoyage0("xxzx", new VesselVoyage(rs.getString("vessel_namec"), rs.getString("voyage")));
 //                    List<String> users = getCustomerCodes("un");
 //                    users.addAll(getCustomerCodes("jt"));
 //                    users.add("xxzx");

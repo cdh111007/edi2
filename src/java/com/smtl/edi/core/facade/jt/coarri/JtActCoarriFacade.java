@@ -34,7 +34,7 @@ public class JtActCoarriFacade {
      * @param redo
      * @param ctnNos
      */
-    public static void doHandle(String customer, DateRange range, boolean redo, String... ctnNos) {
+    public static void prepareAndProcess(String customer, DateRange range, boolean redo, String... ctnNos) {
 
         try {
 

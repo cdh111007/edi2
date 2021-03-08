@@ -106,7 +106,7 @@ public class DVCodecoExcutor {
                     while (rsCtnOperator.next()) {
 
                         String ctnOperator = rsCtnOperator.getString("ctn_operator");
-                        if (!StringUtil.isEmpty(ctnOperator)) {
+                        if (StringUtil.isNotEmpty(ctnOperator)) {
                             ctnOperator = ctnOperator.toUpperCase();
                         }
 

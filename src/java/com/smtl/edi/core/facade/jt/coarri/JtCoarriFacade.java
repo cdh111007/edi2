@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import static com.EDIHelper.isSatisfiedActual;
 import com.smtl.edi.vo.DateRange;
+import com.smtl.edi.vo.VesselVoyage;
 
 /**
  * 交通部标准格式装卸船报文入口，按照航次关闭时间/离泊时间发送，由视图参数控制
@@ -33,13 +34,13 @@ public class JtCoarriFacade {
      * @param redo
      * @param ctnNos
      */
-    public static void doHandle(String customer, DateRange range, boolean redo, String... ctnNos) {
+    public static void prepareAndProcess(String customer, DateRange range, boolean redo, String... ctnNos) {
 
         customer = customer.toUpperCase();
 
         //如果是实时报文，并且不是补发的
         if (isSatisfiedActual(customer) && !redo) {
-            JtActCoarriFacade.doHandle(customer, range, redo);
+            JtActCoarriFacade.prepareAndProcess(customer, range, redo);
             return;
         }
 
@@ -53,13 +54,13 @@ public class JtCoarriFacade {
 
         try {
 
-            try (PreparedStatement psVslRef = DbUtil.preparedStatement(DbUtil.getConnection(),
+            try (PreparedStatement psVsl = DbUtil.preparedStatement(DbUtil.getConnection(),
                     SQLQueryConstants.SQL_VSL_REF_VW)) {
 
-                psVslRef.setString(1, range.getBegin());
-                psVslRef.setString(2, range.getEnd());
+                psVsl.setString(1, range.getBegin());
+                psVsl.setString(2, range.getEnd());
 
-                ResultSet rsVsl = psVslRef.executeQuery();
+                ResultSet rsVsl = psVsl.executeQuery();
 
                 while (rsVsl.next()) {
                     if (stdJtCsts.contains(customer)) {
@@ -81,12 +82,11 @@ public class JtCoarriFacade {
      * 根据船名航次创建交通部标准格式的装卸船报文
      *
      * @param customer
-     * @param vslName
-     * @param voyage
+     * @param vessel
      * @param redo
      * @param ctnNos
      */
-    public static void doHandle0(String customer, String vslName, String voyage, boolean redo, String... ctnNos) {
+    public static void prepareAndProcess0(String customer, VesselVoyage vessel, boolean redo, String... ctnNos) {
 
         customer = customer.toUpperCase();
 
@@ -100,13 +100,13 @@ public class JtCoarriFacade {
 
         try {
 
-            try (PreparedStatement psVslRef = DbUtil.preparedStatement(DbUtil.getConnection(),
+            try (PreparedStatement psVsl = DbUtil.preparedStatement(DbUtil.getConnection(),
                     SQLQueryConstants.SQL_VSL_VOY_VW)) {
 
-                psVslRef.setString(1, vslName);
-                psVslRef.setString(2, voyage);
+                psVsl.setString(1, vessel.getVessel());
+                psVsl.setString(2, vessel.getVoyage());
 
-                ResultSet rsVsl = psVslRef.executeQuery();
+                ResultSet rsVsl = psVsl.executeQuery();
 
                 while (rsVsl.next()) {
                     if (stdJtCsts.contains(customer)) {

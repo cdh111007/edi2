@@ -43,7 +43,7 @@ public class JtCodecoExcutor {
      * @param redo
      * @param ctnNos
      */
-    public static void doHandle(String customer, DateRange range, boolean redo, String... ctnNos) {
+    public static void process(String customer, DateRange range, boolean redo, String... ctnNos) {
 
         String sqlGateIn = SQLQueryConstants.SQL_GATE_IN_JT;
         String sqlGateOut = SQLQueryConstants.SQL_GATE_OUT_JT;

@@ -26,6 +26,7 @@ import static com.EDIHelper.buildFilename;
 import static com.EDIHelper.logMsgDetails;
 import static com.EDIHelper.PS_COARRI_CUSTOMER;
 import com.smtl.edi.vo.DateRange;
+import com.smtl.edi.vo.VesselVoyage;
 import org.apache.log4j.Logger;
 
 /**
@@ -38,16 +39,16 @@ public class XxzxCoarriExcutor {
     final static Logger LOGGER = Logger.getLogger(XxzxCoarriExcutor.class);
 
     /**
-     * 创建交通部电子口岸定制版格式的装卸船报文（该段时间内离泊/航次关闭的航次）
+     * 数据准备
      *
      * @param range
      * @param redo
      */
-    public static void doHandle(DateRange range, boolean redo) {
+    public static void prepareAndProcess(DateRange range, boolean redo) {
 
         try {
 
-            process(range, null, null, redo);
+            process(range, null, redo);
 
         } catch (SQLException ex) {
             LOGGER.info(ExceptionUtil.getStackTraceAsString(ex));
@@ -57,6 +58,7 @@ public class XxzxCoarriExcutor {
     }
 
     /**
+     * 创建交通部电子口岸定制版格式的装卸船报文（该段时间内离泊/航次关闭的航次）
      *
      * @param sender
      * @param receiver
@@ -65,7 +67,7 @@ public class XxzxCoarriExcutor {
      * @param redo
      * @throws SQLException
      */
-    private static void process(DateRange range, String vslName, String voyage, boolean redo) throws SQLException {
+    private static void process(DateRange range, VesselVoyage vessel, boolean redo) throws SQLException {
 
         PS_COARRI_CUSTOMER.setString(1, "XXZX");
         PS_COARRI_CUSTOMER.setString(2, "COARRI");
@@ -81,22 +83,24 @@ public class XxzxCoarriExcutor {
 
         Connection con = DbUtil.getConnection();
 
-        try (PreparedStatement psVslRef = DbUtil.preparedStatement(con, SQLQueryConstants.SQL_XXZX_VSL_VOY_VW);
+        try (PreparedStatement psVsl = DbUtil.preparedStatement(con, SQLQueryConstants.SQL_XXZX_VSL_VOY_VW);
                 PreparedStatement psTotalCtns = DbUtil.preparedStatement(con, SQL_XXZX_TOTAL_CTNS);
                 PreparedStatement psTotalTEU = DbUtil.preparedStatement(con, SQL_XXZX_TOTAL_TEU);
                 PreparedStatement psTotalWeight = DbUtil.preparedStatement(con, SQL_XXZX_TOTAL_WT)) {
 
             if (range != null) {
-                psVslRef.setString(1, range.getBegin());
-                psVslRef.setString(2, range.getEnd());
+                psVsl.setString(1, range.getBegin());
+                psVsl.setString(2, range.getEnd());
+            } else if (vessel != null) {
+                psVsl.setString(1, vessel.getVessel());
+                psVsl.setString(2, vessel.getVoyage());
             } else {
-                psVslRef.setString(1, vslName);
-                psVslRef.setString(2, voyage);
+                return;
             }
 
-            ResultSet rsRef = psVslRef.executeQuery();
+            ResultSet rsVsl = psVsl.executeQuery();
 
-            while (rsRef.next()) {
+            while (rsVsl.next()) {
 
                 List<MsgCtnDetailLog> logs = new LinkedList<>();
 
@@ -105,7 +109,7 @@ public class XxzxCoarriExcutor {
                 //00
                 JtXxzxCoarri.SEG00 seg00 = coarri.new SEG00();
                 String msgName = "";
-                String ieFlag = rsRef.getString("ie_flag");
+                String ieFlag = rsVsl.getString("ie_flag");
                 if ("I".equals(ieFlag)) {
                     seg00.setFileDesc("DISCHARGE REPORT");
                     msgName = "Discharge";
@@ -126,46 +130,46 @@ public class XxzxCoarriExcutor {
                 String completeDischargingTime = "";
 
                 if ("E".equals(ieFlag)) {
-                    startLoadingTime = rsRef.getString("ats");
-                    completeLoadingTime = rsRef.getString("ate");
+                    startLoadingTime = rsVsl.getString("ats");
+                    completeLoadingTime = rsVsl.getString("ate");
                 } else {
-                    startDischargingTime = rsRef.getString("ats");
-                    completeDischargingTime = rsRef.getString("ate");
+                    startDischargingTime = rsVsl.getString("ats");
+                    completeDischargingTime = rsVsl.getString("ate");
                 }
 
                 JtXxzxCoarri.SEG10 seg10 = coarri.new SEG10();
 
-                seg10.setVesselCode(rsRef.getString("vessel_code"));
-                seg10.setVesselName(rsRef.getString("vessel_namec"));
-                seg10.setVoyage(rsRef.getString("voyage"));
-                seg10.setCountryCode(rsRef.getString("country_code"));
-                seg10.setLinerType(rsRef.getString("liner_id"));
-                seg10.setBerthingTime(rsRef.getString("ata"));
-                seg10.setDepartureTime(rsRef.getString("atd"));
+                seg10.setVesselCode(rsVsl.getString("vessel_code"));
+                seg10.setVesselName(rsVsl.getString("vessel_namec"));
+                seg10.setVoyage(rsVsl.getString("voyage"));
+                seg10.setCountryCode(rsVsl.getString("country_code"));
+                seg10.setLinerType(rsVsl.getString("liner_id"));
+                seg10.setBerthingTime(rsVsl.getString("ata"));
+                seg10.setDepartureTime(rsVsl.getString("atd"));
                 seg10.setStartDischargingTime(startDischargingTime);
                 seg10.setCompleteDischargingTime(completeDischargingTime);
                 seg10.setStartLoadingTime(startLoadingTime);
                 seg10.setCompleteLoadingTime(completeLoadingTime);
-                seg10.setTotalCtns(getTotalCtns(rsRef.getString("vessel_reference"), rsRef.getString("voyage"), rsRef.getString("ie_flag"), psTotalCtns));
-                seg10.setBerthNo(rsRef.getString("berth_reference"));
-                seg10.setIMO(rsRef.getString("call_sign"));
-                seg10.setYqb(rsRef.getString("yqb"));
-                seg10.setBerthingDraft(rsRef.getString("arrival_draft"));
-                seg10.setDepartureDraft(rsRef.getString("departure_draft"));
-                seg10.setCargoName(rsRef.getString("cargo_name"));
-                seg10.setTotalWeight(getTotalWeight(rsRef.getString("vessel_reference"), rsRef.getString("voyage"), rsRef.getString("ie_flag"), psTotalWeight));
-                seg10.setTeu(getTotalTEU(rsRef.getString("vessel_reference"), rsRef.getString("voyage"), rsRef.getString("ie_flag"), psTotalTEU));
-                seg10.setZkl(rsRef.getString("zkl"));
-                seg10.setSxk(rsRef.getString("sxk"));
-                seg10.setPayerName(rsRef.getString("payer_name"));
+                seg10.setTotalCtns(getTotalCtns(rsVsl.getString("vessel_reference"), rsVsl.getString("voyage"), rsVsl.getString("ie_flag"), psTotalCtns));
+                seg10.setBerthNo(rsVsl.getString("berth_reference"));
+                seg10.setIMO(rsVsl.getString("call_sign"));
+                seg10.setYqb(rsVsl.getString("yqb"));
+                seg10.setBerthingDraft(rsVsl.getString("arrival_draft"));
+                seg10.setDepartureDraft(rsVsl.getString("departure_draft"));
+                seg10.setCargoName(rsVsl.getString("cargo_name"));
+                seg10.setTotalWeight(getTotalWeight(rsVsl.getString("vessel_reference"), rsVsl.getString("voyage"), rsVsl.getString("ie_flag"), psTotalWeight));
+                seg10.setTeu(getTotalTEU(rsVsl.getString("vessel_reference"), rsVsl.getString("voyage"), rsVsl.getString("ie_flag"), psTotalTEU));
+                seg10.setZkl(rsVsl.getString("zkl"));
+                seg10.setSxk(rsVsl.getString("sxk"));
+                seg10.setPayerName(rsVsl.getString("payer_name"));
 
                 coarri.SEG10(seg10);
 
                 try (PreparedStatement psCtn = DbUtil.preparedStatement(con, SQL_XXZX_VSL_CTN_VW)) {
 
-                    psCtn.setString(1, rsRef.getString("vessel_code"));
-                    psCtn.setString(2, rsRef.getString("voyage"));
-                    psCtn.setString(3, rsRef.getString("ie_flag"));
+                    psCtn.setString(1, rsVsl.getString("vessel_code"));
+                    psCtn.setString(2, rsVsl.getString("voyage"));
+                    psCtn.setString(3, rsVsl.getString("ie_flag"));
 
                     ResultSet rsCtn = psCtn.executeQuery();
 
@@ -232,10 +236,10 @@ public class XxzxCoarriExcutor {
                         coarri.getSeg5xs().add(seg5x);
 
                         MsgCtnDetailLog log = new MsgCtnDetailLog();
-                        log.setVslName(rsRef.getString("vessel_namec"));
-                        log.setVoyage(rsRef.getString("voyage"));
+                        log.setVslName(rsVsl.getString("vessel_namec"));
+                        log.setVoyage(rsVsl.getString("voyage"));
                         log.setCustomer("XXZX");
-                        log.setVslRef(rsRef.getString("vessel_reference"));
+                        log.setVslRef(rsVsl.getString("vessel_reference"));
                         log.setMsgName(msgName);
                         log.setMsgType("coarri");
                         log.setCtnNo(ctnNo);
@@ -254,9 +258,9 @@ public class XxzxCoarriExcutor {
 
                 try (CallableStatement callCtnStats = con.prepareCall(sqlCtnStats)) {
 
-                    callCtnStats.setString(1, rsRef.getString("vessel_reference"));
-                    callCtnStats.setString(2, rsRef.getString("voyage"));
-                    callCtnStats.setString(3, rsRef.getString("ie_flag"));
+                    callCtnStats.setString(1, rsVsl.getString("vessel_reference"));
+                    callCtnStats.setString(2, rsVsl.getString("voyage"));
+                    callCtnStats.setString(3, rsVsl.getString("ie_flag"));
                     callCtnStats.registerOutParameter(4, oracle.jdbc.OracleTypes.CURSOR);
 
                     callCtnStats.execute();
@@ -307,15 +311,14 @@ public class XxzxCoarriExcutor {
     /**
      * 创建交通部电子口岸定制版格式的装卸船报文（按照船名航次）
      *
-     * @param vslName
-     * @param voyage
+     * @param vessel
      * @param redo
      */
-    public static void doHandle0(String vslName, String voyage, boolean redo) {
+    public static void prepareAndExcute0(VesselVoyage vessel, boolean redo) {
 
         try {
 
-            process(null, vslName, voyage, redo);
+            process(null, vessel, redo);
 
         } catch (SQLException ex) {
             LOGGER.info(ExceptionUtil.getStackTraceAsString(ex));

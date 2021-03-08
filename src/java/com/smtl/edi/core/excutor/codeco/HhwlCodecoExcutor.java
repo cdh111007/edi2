@@ -31,7 +31,7 @@ public class HhwlCodecoExcutor {
     final static Logger LOGGER = Logger.getLogger(HhwlCodecoExcutor.class);
 
     public static void main(String[] args) {
-        doHandle();
+        process();
     }
 
     /**
@@ -39,15 +39,15 @@ public class HhwlCodecoExcutor {
      *
      * @param whichDay
      */
-    public static void doHandle(Integer whichDay) {
-        doHandle("HHWL", false, whichDay);
+    public static void process(Integer whichDay) {
+        HhwlCodecoExcutor.process("HHWL", false, whichDay);
     }
 
     /**
      *
      */
-    public static void doHandle() {
-        doHandle("HHWL", false);
+    public static void process() {
+        HhwlCodecoExcutor.process("HHWL", false);
     }
 
     /**
@@ -55,8 +55,8 @@ public class HhwlCodecoExcutor {
      * @param redo
      * @param whichDay
      */
-    public static void doHandle(boolean redo, Integer... whichDay) {
-        doHandle("HHWL", redo, whichDay);
+    public static void process(boolean redo, Integer... whichDay) {
+        HhwlCodecoExcutor.process("HHWL", redo, whichDay);
     }
 
     /**
@@ -66,7 +66,7 @@ public class HhwlCodecoExcutor {
      * @param redo 是否重发
      * @param whichDay 从今天开始往前推几天
      */
-    public static void doHandle(String customer, boolean redo, Integer... whichDay) {
+    public static void process(String customer, boolean redo, Integer... whichDay) {
 
         //箱明细
         String sqlGateIn = "select * from tc2_edi_codeco_vw t "

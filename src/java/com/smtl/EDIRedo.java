@@ -13,6 +13,7 @@ import com.smtl.edi.util.DbUtil;
 import com.smtl.edi.util.ExceptionUtil;
 import com.smtl.edi.util.ValidationUtil;
 import com.smtl.edi.vo.DateRange;
+import com.smtl.edi.vo.VesselVoyage;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,7 +31,7 @@ public class EDIRedo {
     private static final Logger LOGGER = Logger.getLogger(EDIRedo.class);
 
     public static void main(String[] args) {
- 
+
         DateRange range;
         for (int i = 0; i < 40; i++) {
             System.out.println(DatetimeUtil.format(DatetimeUtil.daysAgo(i + 1), DatetimeUtil.YYYYMMDDHHMMSS) + " - " + DatetimeUtil.format(DatetimeUtil.daysAgo(i), DatetimeUtil.YYYYMMDDHHMMSS));
@@ -39,7 +40,7 @@ public class EDIRedo {
             range.setEnd(DatetimeUtil.format(DatetimeUtil.daysAgo(i), DatetimeUtil.YYYYMMDDHHMMSS));
             codeco("HAS1", range);
         }
- 
+
     }
 
     final static String SQL_CST_EDI_TYPE = "select t.cst_edi_type from tc2_edi_cust_info t where t.cst_code = ?";
@@ -48,12 +49,11 @@ public class EDIRedo {
      * 根据客户代码，船名航次重发报文，前提要关闭航次/离泊后 数据可能会重复发
      *
      * @param customer
-     * @param vslName
-     * @param voyage
+     * @param vessel
      * @param ctnNos
      * @return
      */
-    public static String coarriByVslNameAndVoyage(String customer, String vslName, String voyage, String... ctnNos) {
+    public static String coarriByVslNameAndVoyage(String customer, VesselVoyage vessel, String... ctnNos) {
 
         try {
 
@@ -67,8 +67,8 @@ public class EDIRedo {
             Connection con = DbUtil.getConnection();
 
             PreparedStatement psTimeRange = con.prepareStatement(timeRange);
-            psTimeRange.setString(1, vslName);
-            psTimeRange.setString(2, voyage);
+            psTimeRange.setString(1, vessel.getVessel());
+            psTimeRange.setString(2, vessel.getVoyage());
 
             PreparedStatement ps = con.prepareStatement(SQL_CST_EDI_TYPE);
             ps.setString(1, customer);
@@ -85,14 +85,14 @@ public class EDIRedo {
 
                     while (rsTimeRange.next()) {
                         if (ValidationUtil.isValid(ctnNos)) {
-                            JtCoarriFacade.doHandle(customer, new DateRange(rsTimeRange.getString("begin_time"),
+                            JtCoarriFacade.prepareAndProcess(customer, new DateRange(rsTimeRange.getString("begin_time"),
                                     rsTimeRange.getString("end_time")), true, ctnNos);
                         } else {
                             if ("xxzx".equalsIgnoreCase(customer)) {
-                                XxzxCoarriExcutor.doHandle(new DateRange(rsTimeRange.getString("begin_time"),
+                                XxzxCoarriExcutor.prepareAndProcess(new DateRange(rsTimeRange.getString("begin_time"),
                                         rsTimeRange.getString("end_time")), true);
                             } else {
-                                JtCoarriFacade.doHandle(customer, new DateRange(rsTimeRange.getString("begin_time"),
+                                JtCoarriFacade.prepareAndProcess(customer, new DateRange(rsTimeRange.getString("begin_time"),
                                         rsTimeRange.getString("end_time")), true);
                             }
                         }
@@ -105,10 +105,10 @@ public class EDIRedo {
 
                     while (rsTimeRange.next()) {
                         if (ValidationUtil.isValid(ctnNos)) {
-                            UnCoarriFacade.doHandle(customer, new DateRange(rsTimeRange.getString("begin_time"),
+                            UnCoarriFacade.prepareAndProcess(customer, new DateRange(rsTimeRange.getString("begin_time"),
                                     rsTimeRange.getString("end_time")), true, ctnNos);
                         } else {
-                            UnCoarriFacade.doHandle(customer, new DateRange(rsTimeRange.getString("begin_time"),
+                            UnCoarriFacade.prepareAndProcess(customer, new DateRange(rsTimeRange.getString("begin_time"),
                                     rsTimeRange.getString("end_time")), true);
                         }
                     }
@@ -131,12 +131,11 @@ public class EDIRedo {
      * 根据客户代码，船名航次重发报文，前提要关闭航次/离泊后 数据不会重复发
      *
      * @param customer
-     * @param vslName
-     * @param voyage
+     * @param vessel
      * @param ctnNos
      * @return
      */
-    public static String coarriByVslNameAndVoyage0(String customer, String vslName, String voyage, String... ctnNos) {
+    public static String coarriByVslNameAndVoyage0(String customer, VesselVoyage vessel, String... ctnNos) {
 
         try {
 
@@ -156,12 +155,12 @@ public class EDIRedo {
                 if ("jt".equalsIgnoreCase(ediType)) {
 
                     if (ValidationUtil.isValid(ctnNos)) {
-                        JtCoarriFacade.doHandle0(customer, vslName, voyage, true, ctnNos);
+                        JtCoarriFacade.prepareAndProcess0(customer, vessel, true, ctnNos);
                     } else {
                         if ("xxzx".equalsIgnoreCase(customer)) {
-                            XxzxCoarriExcutor.doHandle0(vslName, voyage, true);
+                            XxzxCoarriExcutor.prepareAndExcute0(vessel, true);
                         } else {
-                            JtCoarriFacade.doHandle0(customer, vslName, voyage, true);
+                            JtCoarriFacade.prepareAndProcess0(customer, vessel, true);
                         }
                     }
 
@@ -170,9 +169,9 @@ public class EDIRedo {
                 if ("un".equalsIgnoreCase(ediType)) {
 
                     if (ValidationUtil.isValid(ctnNos)) {
-                        UnCoarriFacade.doHandle0(customer, vslName, voyage, true, ctnNos);
+                        UnCoarriFacade.prepareAndProcess0(customer, vessel, true, ctnNos);
                     } else {
-                        UnCoarriFacade.doHandle0(customer, vslName, voyage, true);
+                        UnCoarriFacade.prepareAndProcess0(customer, vessel, true);
                     }
 
                 }
@@ -217,12 +216,12 @@ public class EDIRedo {
                 if ("jt".equalsIgnoreCase(ediType)) {
 
                     if (ValidationUtil.isValid(ctnNos)) {
-                        JtActCoarriFacade.doHandle(customer, range, true, ctnNos);
+                        JtActCoarriFacade.prepareAndProcess(customer, range, true, ctnNos);
                     } else {
                         if ("xxzx".equalsIgnoreCase(customer)) {
-                            XxzxCoarriExcutor.doHandle(range, true);
+                            XxzxCoarriExcutor.prepareAndProcess(range, true);
                         } else {
-                            JtActCoarriFacade.doHandle(customer, range, true);
+                            JtActCoarriFacade.prepareAndProcess(customer, range, true);
                         }
 
                     }
@@ -232,9 +231,9 @@ public class EDIRedo {
                 if ("un".equalsIgnoreCase(ediType)) {
 
                     if (ValidationUtil.isValid(ctnNos)) {
-                        UnActCoarriFacade.doHandle(customer, range, true, ctnNos);
+                        UnActCoarriFacade.prepareAndProcess(customer, range, true, ctnNos);
                     } else {
-                        UnActCoarriFacade.doHandle(customer, range, true);
+                        UnActCoarriFacade.prepareAndProcess(customer, range, true);
                     }
                 }
 
@@ -278,17 +277,17 @@ public class EDIRedo {
 
                 if ("jt".equalsIgnoreCase(ediType)) {
                     if (ValidationUtil.isValid(ctnNos)) {
-                        JtCodecoExcutor.doHandle(customer, range, true, ctnNos);
+                        JtCodecoExcutor.process(customer, range, true, ctnNos);
                     } else {
-                        JtCodecoExcutor.doHandle(customer, range, true);
+                        JtCodecoExcutor.process(customer, range, true);
                     }
                 }
 
                 if ("un".equalsIgnoreCase(ediType)) {
                     if (ValidationUtil.isValid(ctnNos)) {
-                        UnCodecoExcutor.doHandle(customer, range, true, ctnNos);
+                        UnCodecoExcutor.process(customer, range, true, ctnNos);
                     } else {
-                        UnCodecoExcutor.doHandle(customer, range, true);
+                        UnCodecoExcutor.process(customer, range, true);
                     }
                 }
 
@@ -381,7 +380,7 @@ public class EDIRedo {
 
             while (rs.next()) {
                 System.out.println(rs.getString("vessel_namec") + "/" + rs.getString("voyage"));
-                EDIRedo.coarriByVslNameAndVoyage0("xxzx", rs.getString("vessel_namec"), rs.getString("voyage"));
+                EDIRedo.coarriByVslNameAndVoyage0("xxzx", new VesselVoyage(rs.getString("vessel_namec"), rs.getString("voyage")));
             }
 
         } catch (SQLException ex) {

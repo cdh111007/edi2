@@ -51,7 +51,8 @@ public class TaskFacade {
             }
             String end = DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS);
 
-            print("写DV报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS) + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
+            print("写DV报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS)
+                    + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
 
             DVCodecoExcutor.un(customer, new DateRange(begin, end), false);
 
@@ -81,7 +82,8 @@ public class TaskFacade {
             }
             String end = DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS);
 
-            print("写DV报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS) + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
+            print("写DV报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS)
+                    + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
 
             DVCodecoExcutor.jt(customer, new DateRange(begin, end), false);
 
@@ -90,13 +92,16 @@ public class TaskFacade {
 
     }
 
+    /**
+     * 华航进出门 自定义格式
+     */
     static void hhwlCodeco() {
 
         String from = getLastCreateAtTime0("HHWL", "CODECO", "C");
 
         //如果第一次发，那么直接发前天的报文
         if (StringUtil.isEmpty(from)) {
-            HhwlCodecoExcutor.doHandle();
+            HhwlCodecoExcutor.process();
             return;
         }
 
@@ -108,7 +113,7 @@ public class TaskFacade {
         //如果之前发过报文，检测从上次开始到现在是否过去1整天
         if (days == 1) {
             print("写CODECO报文数据..." + "HHWL" + " " + DatetimeUtil.now("yyyyMMdd"));
-            HhwlCodecoExcutor.doHandle();
+            HhwlCodecoExcutor.process();
             print("OK!");
             return;
         }
@@ -118,7 +123,7 @@ public class TaskFacade {
 
             for (int i = 0; i < days; i++) {
                 print("写CODECO报文数据..." + "HHWL" + " 补：" + DatetimeUtil.format(DatetimeUtil.daysAgo(i + 1), "yyyyMMdd"));
-                HhwlCodecoExcutor.doHandle(i + 1);
+                HhwlCodecoExcutor.process(i + 1);
             }
 
             print("OK!");
@@ -139,9 +144,10 @@ public class TaskFacade {
         }
         String end = DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS);
 
-        print("写COARRI报文数据...XXZX" + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS) + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
+        print("写COARRI报文数据...XXZX" + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS)
+                + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
 
-        XxzxCoarriExcutor.doHandle(new DateRange(begin, end), false);
+        XxzxCoarriExcutor.prepareAndProcess(new DateRange(begin, end), false);
 
         print("OK!");
 
@@ -179,6 +185,7 @@ public class TaskFacade {
     }
 
     /**
+     * 装卸船
      *
      * @param ediType un/jt
      */
@@ -192,12 +199,13 @@ public class TaskFacade {
             }
             String end = DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS);
 
-            print("写COARRI报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS) + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
+            print("写COARRI报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS)
+                    + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
 
             if ("un".equalsIgnoreCase(ediType)) {
-                UnCoarriFacade.doHandle(customer, new DateRange(begin, end), false);
+                UnCoarriFacade.prepareAndProcess(customer, new DateRange(begin, end), false);
             } else {
-                JtCoarriFacade.doHandle(customer, new DateRange(begin, end), false);
+                JtCoarriFacade.prepareAndProcess(customer, new DateRange(begin, end), false);
             }
 
             print("OK!");
@@ -205,6 +213,7 @@ public class TaskFacade {
     }
 
     /**
+     * 进出门
      *
      * @param ediType un/jt
      */
@@ -218,12 +227,13 @@ public class TaskFacade {
             }
             String end = DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS);
 
-            print("写CODECO报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS) + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
+            print("写CODECO报文数据..." + customer + "\t" + DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS)
+                    + " - " + DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
 
             if ("un".equalsIgnoreCase(ediType)) {
-                UnCodecoExcutor.doHandle(customer, new DateRange(begin, end), false);
+                UnCodecoExcutor.process(customer, new DateRange(begin, end), false);
             } else {
-                JtCodecoExcutor.doHandle(customer, new DateRange(begin, end), false);
+                JtCodecoExcutor.process(customer, new DateRange(begin, end), false);
             }
 
             print("OK!");
@@ -231,7 +241,7 @@ public class TaskFacade {
     }
 
     /**
-     *
+     * 场存
      */
     public static void coedor() {
         List<String> customers = getCustomerCodesByEDIType("JT");
@@ -251,7 +261,7 @@ public class TaskFacade {
     }
 
     /**
-     *
+     * 离港
      *
      */
     public static void vesdep() {
@@ -272,7 +282,7 @@ public class TaskFacade {
     }
 
     /**
-     *
+     * 完船
      */
     public static void cosecr() {
         List<String> customers = getCustomerCodesByEDIType("JT");
