@@ -362,7 +362,7 @@ public class UnCodecoExcutor {
                     //NAD
                     if (!"HLC".equalsIgnoreCase(customer)) {
                         UnCodeco.EQD.NAD nad_ = codeco.new EQD().new NAD();
-                        nad_.setPartyId(rsCtn.getString("ctn_operator"));
+                        nad_.setPartyId(rsCtn.getString("ctn_operator_code"));
                         eqd.NAD(nad_);
                     }
 
