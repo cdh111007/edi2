@@ -55,65 +55,64 @@ public class JtCoedorExcutor {
 
             Connection con = DbUtil.getConnection();
 
-            PreparedStatement psCtn = con.prepareStatement(SQLQueryConstants.SQL_COEDOR);
-            psCtn.setString(1, customer);
+            try (PreparedStatement psCtn = con.prepareStatement(SQLQueryConstants.SQL_COEDOR)) {
 
-            JtCoedor coedor = new JtCoedor();
+                JtCoedor coedor = new JtCoedor();
 
-            JtCoedor.SEG00 seg00 = coedor.new SEG00();
-            seg00.setSender(sender);
-            seg00.setRecipient(receiver);
-            seg00.setFileDesc("STOCK REPORT");
-            seg00.setFileCreateTime(DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS));
-            coedor.SEG00(seg00);
+                JtCoedor.SEG00 seg00 = coedor.new SEG00();
+                seg00.setSender(sender);
+                seg00.setRecipient(receiver);
+                seg00.setFileDesc("STOCK REPORT");
+                seg00.setFileCreateTime(DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS));
+                coedor.SEG00(seg00);
 
-            ResultSet rsCtn = psCtn.executeQuery();
+                psCtn.setString(1, customer);
+                ResultSet rsCtn = psCtn.executeQuery();
 
-            while (rsCtn.next()) {
+                while (rsCtn.next()) {
 
-                JtCoedor.SEG5X seg5x = coedor.new SEG5X();
+                    JtCoedor.SEG5X seg5x = coedor.new SEG5X();
 
-                JtCoedor.SEG5X.SEG50 seg50 = seg5x.new SEG50();
+                    JtCoedor.SEG5X.SEG50 seg50 = seg5x.new SEG50();
 
-                seg50.setCtnNo(rsCtn.getString("ctn_no"));
-                seg50.setCtnStatus(rsCtn.getString("ctn_status"));
-                seg50.setCtnType(rsCtn.getString("ctn_size_type"));
-                seg50.setStockDays(rsCtn.getString("stock_days"));
-                seg50.setStockLocation(rsCtn.getString("stock_location"));
-                seg50.setInboundVessel(rsCtn.getString("in_vsl_name"));
-                seg50.setInboundVoyage(rsCtn.getString("inbound_voyage"));
-                seg50.setOutboundVessel(rsCtn.getString("out_vsl_name"));
-                seg50.setOutboundVoyage(rsCtn.getString("outbound_voyage"));
-                seg50.setBillNo(rsCtn.getString("bl_no"));
-                seg50.setDischargeTime(rsCtn.getString("discharge_time"));
-                seg50.setInGateTime(rsCtn.getString("inter_yard_time"));
-                seg50.setVesselIE(rsCtn.getString("vessel_ie"));
+                    seg50.setCtnNo(rsCtn.getString("ctn_no"));
+                    seg50.setCtnStatus(rsCtn.getString("ctn_status"));
+                    seg50.setCtnType(rsCtn.getString("ctn_size_type"));
+                    seg50.setStockDays(rsCtn.getString("stock_days"));
+                    seg50.setStockLocation(rsCtn.getString("stock_location"));
+                    seg50.setInboundVessel(rsCtn.getString("in_vsl_name"));
+                    seg50.setInboundVoyage(rsCtn.getString("inbound_voyage"));
+                    seg50.setOutboundVessel(rsCtn.getString("out_vsl_name"));
+                    seg50.setOutboundVoyage(rsCtn.getString("outbound_voyage"));
+                    seg50.setBillNo(rsCtn.getString("bl_no"));
+                    seg50.setDischargeTime(rsCtn.getString("discharge_time"));
+                    seg50.setInGateTime(rsCtn.getString("inter_yard_time"));
+                    seg50.setVesselIE(rsCtn.getString("vessel_ie"));
 
-                seg5x.SEG50(seg50);
+                    seg5x.SEG50(seg50);
 
-                coedor.getSeg5xs().add(seg5x);
+                    coedor.getSeg5xs().add(seg5x);
 
-            }
-
-            JtCoedor.SEG99 seg99 = coedor.new SEG99();
-            coedor.SEG99(seg99);
-
-            String logId = String.valueOf(EDIHelper.getLogSeq());
-
-            if (!coedor.getSeg5xs().isEmpty()) {
-                String report = coedor.toString().replaceAll("null", "");
-                System.out.println(report);
-                String filename = buildFilename("coedor", customer, sender,
-                        receiver, "STOCK REPORT", logId, "txt");
-                boolean ok = write(filename, report);
-                if (ok) {
-                    logSend(logId, customer, "coedor", "JT", filename, report, false);
                 }
-            } else {
-                logSend(logId, customer, "coedor", "JT", "", "", false);
-            }
 
-            DbUtil.close(psCtn);
+                JtCoedor.SEG99 seg99 = coedor.new SEG99();
+                coedor.SEG99(seg99);
+
+                String logId = String.valueOf(EDIHelper.getLogSeq());
+
+                if (!coedor.getSeg5xs().isEmpty()) {
+                    String report = coedor.toString().replaceAll("null", "");
+                    System.out.println(report);
+                    String filename = buildFilename("coedor", customer, sender,
+                            receiver, "STOCK REPORT", logId, "txt");
+                    boolean ok = write(filename, report);
+                    if (ok) {
+                        logSend(logId, customer, "coedor", "JT", filename, report, false);
+                    }
+                } else {
+                    logSend(logId, customer, "coedor", "JT", "", "", false);
+                }
+            }
 
         } catch (SQLException ex) {
             ex.printStackTrace();

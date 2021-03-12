@@ -55,76 +55,73 @@ public class JtVesdepExcutor {
 
             Connection con = DbUtil.getConnection();
 
-            PreparedStatement psTotal = con.prepareStatement(SQLQueryConstants.SQL_VESDEP_LOG_TOTAL);
+            try (PreparedStatement psTotal = con.prepareStatement(SQLQueryConstants.SQL_VESDEP_LOG_TOTAL);
+                    PreparedStatement psCoarri = con.prepareStatement(SQLQueryConstants.SQL_VESDEP_COARRI_DEPARTURE_LIST)) {
 
-            PreparedStatement psCoarri = con.prepareStatement(SQLQueryConstants.SQL_VESDEP_COARRI_DEPARTURE_LIST);
-            psCoarri.setString(1, customer);
+                psCoarri.setString(1, customer);
+                ResultSet rsCoarri = psCoarri.executeQuery();
 
-            ResultSet rsCoarri = psCoarri.executeQuery();
+                while (rsCoarri.next()) {
+                    psTotal.setString(1, rsCoarri.getString("vessel_code"));
+                    psTotal.setString(2, rsCoarri.getString("voyage"));
+                    psTotal.setString(3, rsCoarri.getString("vessel_ie"));
+                    psTotal.setString(4, customer);
 
-            while (rsCoarri.next()) {
-                psTotal.setString(1, rsCoarri.getString("vessel_code"));
-                psTotal.setString(2, rsCoarri.getString("voyage"));
-                psTotal.setString(3, rsCoarri.getString("vessel_ie"));
-                psTotal.setString(4, customer);
+                    ResultSet rsTotal = psTotal.executeQuery();
+                    rsTotal.next();
+                    if (rsTotal.getInt("total") == 0) {
+                        //1、插入vesdep_log表；2、插入send_log表
 
-                ResultSet rsTotal = psTotal.executeQuery();
-                rsTotal.next();
-                if (rsTotal.getInt("total") == 0) {
-                    //1、插入vesdep_log表；2、插入send_log表
+                        JtVesdep vesdep = new JtVesdep();
 
-                    JtVesdep vesdep = new JtVesdep();
+                        JtVesdep.SEG00 seg00 = vesdep.new SEG00();
+                        seg00.setSender(sender);
+                        seg00.setRecipient(receiver);
+                        seg00.setFileDesc("VESSEL DEPARTURE");
+                        seg00.setFileCreateTime(DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS));
+                        vesdep.SEG00(seg00);
 
-                    JtVesdep.SEG00 seg00 = vesdep.new SEG00();
-                    seg00.setSender(sender);
-                    seg00.setRecipient(receiver);
-                    seg00.setFileDesc("VESSEL DEPARTURE");
-                    seg00.setFileCreateTime(DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS));
-                    vesdep.SEG00(seg00);
+                        JtVesdep.SEG10 seg10 = vesdep.new SEG10();
+                        seg10.setVesselCode(rsCoarri.getString("vessel_code"));
+                        seg10.setVessel(rsCoarri.getString("vessel_namec"));
+                        seg10.setVoyage(rsCoarri.getString("voyage") + rsCoarri.getString("vessel_ie"));
+                        seg10.setCarrierCode(customer);
+                        seg10.setCarrier(customer);
+                        seg10.setNationalityCode("CN");
+                        seg10.setSailingTime(DatetimeUtil.format(rsCoarri.getString("atd"), DatetimeUtil.YYYYMMDDHHMMSS));
+                        seg10.setBerthTime(DatetimeUtil.format(rsCoarri.getString("ata"), DatetimeUtil.YYYYMMDDHHMMSS));
+                        vesdep.SEG10(seg10);
 
-                    JtVesdep.SEG10 seg10 = vesdep.new SEG10();
-                    seg10.setVesselCode(rsCoarri.getString("vessel_code"));
-                    seg10.setVessel(rsCoarri.getString("vessel_namec"));
-                    seg10.setVoyage(rsCoarri.getString("voyage") + rsCoarri.getString("vessel_ie"));
-                    seg10.setCarrierCode(customer);
-                    seg10.setCarrier(customer);
-                    seg10.setNationalityCode("CN");
-                    seg10.setSailingTime(DatetimeUtil.format(rsCoarri.getString("atd"), DatetimeUtil.YYYYMMDDHHMMSS));
-                    seg10.setBerthTime(DatetimeUtil.format(rsCoarri.getString("ata"), DatetimeUtil.YYYYMMDDHHMMSS));
-                    vesdep.SEG10(seg10);
+                        if ("I".equals(rsCoarri.getString("vessel_ie"))) {
+                            JtVesdep.SEG15 seg15 = vesdep.new SEG15();
+                            seg15.setDischargeBegin(DatetimeUtil.format(rsCoarri.getString("ats"), DatetimeUtil.YYYYMMDDHHMMSS));
+                            seg15.setDischargeEnd(DatetimeUtil.format(rsCoarri.getString("ate"), DatetimeUtil.YYYYMMDDHHMMSS));
+                            vesdep.SEG15(seg15);
+                        } else {
+                            JtVesdep.SEG16 seg16 = vesdep.new SEG16();
+                            seg16.setLoadingBegin(DatetimeUtil.format(rsCoarri.getString("ats"), DatetimeUtil.YYYYMMDDHHMMSS));
+                            seg16.setLoadingEnd(DatetimeUtil.format(rsCoarri.getString("ate"), DatetimeUtil.YYYYMMDDHHMMSS));
+                            vesdep.SEG16(seg16);
+                        }
 
-                    if ("I".equals(rsCoarri.getString("vessel_ie"))) {
-                        JtVesdep.SEG15 seg15 = vesdep.new SEG15();
-                        seg15.setDischargeBegin(DatetimeUtil.format(rsCoarri.getString("ats"), DatetimeUtil.YYYYMMDDHHMMSS));
-                        seg15.setDischargeEnd(DatetimeUtil.format(rsCoarri.getString("ate"), DatetimeUtil.YYYYMMDDHHMMSS));
-                        vesdep.SEG15(seg15);
-                    } else {
-                        JtVesdep.SEG16 seg16 = vesdep.new SEG16();
-                        seg16.setLoadingBegin(DatetimeUtil.format(rsCoarri.getString("ats"), DatetimeUtil.YYYYMMDDHHMMSS));
-                        seg16.setLoadingEnd(DatetimeUtil.format(rsCoarri.getString("ate"), DatetimeUtil.YYYYMMDDHHMMSS));
-                        vesdep.SEG16(seg16);
+                        JtVesdep.SEG99 seg99 = vesdep.new SEG99();
+                        vesdep.SEG99(seg99);
+
+                        String logId = String.valueOf(EDIHelper.getLogSeq());
+
+                        String report = vesdep.toString().replaceAll("null", "");
+                        System.out.println(report);
+                        String filename = buildFilename("vesdep", customer, sender,
+                                receiver, "VESSEL DEPARTURE", logId, "txt");
+                        boolean ok = write(filename, report);
+                        if (ok) {
+                            logSend(logId, customer, "vesdep", "JT", filename, report, false);
+                            logVesdep(logId, customer, rsCoarri.getString("vessel_code"), rsCoarri.getString("voyage"), rsCoarri.getString("vessel_ie"));
+                        }
+
                     }
-
-                    JtVesdep.SEG99 seg99 = vesdep.new SEG99();
-                    vesdep.SEG99(seg99);
-
-                    String logId = String.valueOf(EDIHelper.getLogSeq());
-
-                    String report = vesdep.toString().replaceAll("null", "");
-                    System.out.println(report);
-                    String filename = buildFilename("vesdep", customer, sender,
-                            receiver, "VESSEL DEPARTURE", logId, "txt");
-                    boolean ok = write(filename, report);
-                    if (ok) {
-                        logSend(logId, customer, "vesdep", "JT", filename, report, false);
-                        logVesdep(logId, customer, rsCoarri.getString("vessel_code"), rsCoarri.getString("voyage"), rsCoarri.getString("vessel_ie"));
-                    }
-
                 }
             }
-
-            DbUtil.close(psCoarri);
-            DbUtil.close(psTotal);
 
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -140,12 +137,11 @@ public class JtVesdepExcutor {
                 + "values"
                 + "  (?, ?, ?, ?, ?)";
         Connection con = DbUtil.getConnection();
-        PreparedStatement ps = null;
-        try {
+
+        try (PreparedStatement ps = con.prepareStatement(insertSql)) {
 
             DbUtil.setAutoCommit(con, false);
 
-            ps = con.prepareStatement(insertSql);
             ps.setLong(1, Long.valueOf(logId));
             ps.setString(2, customer);
             ps.setString(3, vesselCode);
@@ -162,10 +158,10 @@ public class JtVesdepExcutor {
             } catch (SQLException ex1) {
                 ex1.printStackTrace();
             }
-
+            LOGGER.error(ExceptionUtil.getStackTraceAsString(ex));
+            ExceptionNotifyTask.notify(ex, new String[]{customer, "vesdep"});
         } finally {
             DbUtil.setAutoCommit(con, true);
-            DbUtil.close(ps);
         }
 
     }

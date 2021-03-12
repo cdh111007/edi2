@@ -201,12 +201,12 @@ public class EDIHelper {
     public static void logSend(String logId, String customer, String msgType,
             String ediType, String filePath, String msgData, boolean redo) {
 
-        Connection con = null;
+        Connection con = DbUtil.getConnection();
+
         PreparedStatement ps = null;
 
         try {
 
-            con = DbUtil.getConnection();
             con.setAutoCommit(false);
 
             //获取上一个id
