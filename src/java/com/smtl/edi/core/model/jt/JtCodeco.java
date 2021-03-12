@@ -32,11 +32,14 @@ public class JtCodeco {
             JtCodeco.SEG5X.SEG50 seg50 = codeco.new SEG5X().new SEG50();
             seg5x.SEG50(seg50);
 
-            JtCodeco.SEG5X.SEG51 seg51 = codeco.new SEG5X().new SEG51();
-            seg5x.SEG51(seg51);
+//            JtCodeco.SEG5X.SEG51 seg51 = codeco.new SEG5X().new SEG51();
+//            seg5x.SEG51(seg51);
+//
+//            JtCodeco.SEG5X.SEG52 seg52 = codeco.new SEG5X().new SEG52();
+//            seg5x.SEG52(seg52);
 
-            JtCodeco.SEG5X.SEG52 seg52 = codeco.new SEG5X().new SEG52();
-            seg5x.SEG52(seg52);
+            JtCodeco.SEG5X.SEG53 seg53 = codeco.new SEG5X().new SEG53();
+            seg5x.SEG53(seg53);
 
             codeco.getSeg5xs().add(seg5x);
         }
@@ -53,6 +56,7 @@ public class JtCodeco {
         private SEG50 seg50;
         private SEG51 seg51;
         private SEG52 seg52;
+        private SEG53 seg53;
 
         public class SEG50 {
 
@@ -242,6 +246,73 @@ public class JtCodeco {
 
         }
 
+        public class SEG53 {
+
+            private String recordId = "10";
+            private String vesselCode;
+            private String vessel;
+            private String voyage;
+            private String ctnOperatorCode;
+            private String ctnOperator;
+
+            public String getCtnOperatorCode() {
+                return ctnOperatorCode;
+            }
+
+            public void setCtnOperatorCode(String ctnOperatorCode) {
+                this.ctnOperatorCode = ctnOperatorCode;
+            }
+
+            public String getCtnOperator() {
+                return ctnOperator;
+            }
+
+            public void setCtnOperator(String ctnOperator) {
+                this.ctnOperator = ctnOperator;
+            }
+
+            public String getRecordId() {
+                return recordId;
+            }
+
+            public void setRecordId(String recordId) {
+                this.recordId = recordId;
+            }
+
+            public String getVesselCode() {
+                return vesselCode;
+            }
+
+            public void setVesselCode(String vesselCode) {
+                this.vesselCode = vesselCode;
+            }
+
+            public String getVessel() {
+                return vessel;
+            }
+
+            public void setVessel(String vessel) {
+                this.vessel = vessel;
+            }
+
+            public String getVoyage() {
+                return voyage;
+            }
+
+            public void setVoyage(String voyage) {
+                this.voyage = voyage;
+            }
+
+            @Override
+            public String toString() {
+                totalLines++;
+                return recordId + ":" + vesselCode + ":"
+                        + vessel + ":" + voyage + ":"
+                        + ctnOperatorCode + ":" + ctnOperator + SEGMENT_TERMINATOR;
+            }
+
+        }
+
         public SEG5X SEG50(SEG50 seg50) {
             this.seg50 = seg50;
             return this;
@@ -257,9 +328,14 @@ public class JtCodeco {
             return this;
         }
 
+        public SEG5X SEG53(SEG53 seg53) {
+            this.seg53 = seg53;
+            return this;
+        }
+
         @Override
         public String toString() {
-            return "" + seg50 + seg51 + seg52;
+            return "" + seg53 + seg50 + seg51 + seg52;
         }
 
     }

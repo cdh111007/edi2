@@ -244,20 +244,24 @@ public class TaskFacade {
      * 场存
      */
     public static void coedor() {
-        List<String> customers = getCustomerCodesByEDIType("JT");
 
-        for (String customer : customers) {
-            if (!"ZGXL".equalsIgnoreCase(customer)) {
-                continue;
+        if (DatetimeUtil.hour() == 8 && (DatetimeUtil.minute() >= 0 && DatetimeUtil.minute() <= 15)) {
+            List<String> customers = getCustomerCodesByEDIType("JT");
+
+            for (String customer : customers) {
+                if (!"ZGXL".equalsIgnoreCase(customer)) {
+                    continue;
+                }
+                String begin = getLastCreateTimeWithIntervalSeconds(customer, "COEDOR", "JT");
+                begin = DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS);
+                String end = DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS);
+
+                print("写COEDOR报文数据..." + customer + "\t" + begin + " - " + end);
+                JtCoedorExcutor.doHandle(customer);
+                print("OK!");
             }
-            String begin = getLastCreateTimeWithIntervalSeconds(customer, "COEDOR", "JT");
-            begin = DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS);
-            String end = DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS);
-
-            print("写COEDOR报文数据..." + customer + "\t" + begin + " - " + end);
-            JtCoedorExcutor.doHandle(customer);
-            print("OK!");
         }
+
     }
 
     /**

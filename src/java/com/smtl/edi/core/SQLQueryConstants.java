@@ -23,12 +23,12 @@ public interface SQLQueryConstants {
 
     //进提箱报文 - 交通部格式
     String SQL_GATE_IN_JT = "select * from tc2_edi_codeco_vw t "
-            + "where upper(t.ctn_operator)=? "
+            + "where upper(t.ctn_operator_code)=? "
             + "and t.in_out_category=? "
             + "and t.in_yard_time between ? and ? ";
 
     String SQL_GATE_OUT_JT = "select * from tc2_edi_codeco_vw t "
-            + "where upper(t.ctn_operator)=? "
+            + "where upper(t.ctn_operator_code)=? "
             + "and t.in_out_category=? "
             + "and t.out_yard_time between ? and ? ";
 

@@ -174,7 +174,7 @@ public class DatetimeUtil {
      */
     public static int hour(Calendar calendar) {
         if (calendar != null) {
-            return calendar.get(Calendar.HOUR);
+            return calendar.get(Calendar.HOUR_OF_DAY);
         } else {
             return hour();
         }
@@ -186,7 +186,7 @@ public class DatetimeUtil {
      * @return
      */
     public static int hour() {
-        return Calendar.getInstance().get(Calendar.HOUR);
+        return Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
     }
 
     /**

@@ -104,9 +104,14 @@ public class JtCodecoExcutor {
                         seg00.setFileCreateTime(DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMM));
                         codeco_.SEG00(seg00);
 
-                        JtCodeco.SEG10 seg10 = codeco_.new SEG10();
-                        seg10.setCtnOperatorCode(ctnOperator);
-                        codeco_.SEG10(seg10);
+                        if (!"ZGXL".equalsIgnoreCase(customer)) {
+                            JtCodeco.SEG10 seg10 = codeco_.new SEG10();
+                            seg10.setCtnOperatorCode(ctnOperator);
+                            if ("ZGXL".equalsIgnoreCase(customer)) {
+                                seg10.setIeFlag(i == 0 ? "E" : "I");
+                            }
+                            codeco_.SEG10(seg10);
+                        }
 
                         psCtn.setString(1, ctnOperator);
                         psCtn.setString(2, jobTypes[i]);
@@ -147,10 +152,21 @@ public class JtCodecoExcutor {
 
                             seg5x.SEG50(seg50);
 
-                            JtCodeco.SEG5X.SEG52 seg52 = seg5x.new SEG52();
-                            seg52.setTransportMode("3");
+                            if (!"ZGXL".equalsIgnoreCase(customer)) {
+                                JtCodeco.SEG5X.SEG52 seg52 = seg5x.new SEG52();
+                                seg52.setTransportMode("3");
+                                seg5x.SEG52(seg52);
+                            }
 
-                            seg5x.SEG52(seg52);
+                            if ("ZGXL".equalsIgnoreCase(customer)) {
+                                JtCodeco.SEG5X.SEG53 seg53 = seg5x.new SEG53();
+                                seg53.setVesselCode(rsCtn.getString("vessel_code"));
+                                seg53.setVessel(rsCtn.getString("vessel_namec"));
+                                seg53.setVoyage(rsCtn.getString("voyage"));
+                                seg53.setCtnOperatorCode(rsCtn.getString("ctn_operator_code"));
+                                seg53.setCtnOperator(rsCtn.getString("ctn_operator"));
+                                seg5x.SEG53(seg53);
+                            }
 
                             codeco_.getSeg5xs().add(seg5x);
 
