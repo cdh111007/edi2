@@ -27,10 +27,14 @@ public class BootTask extends TimerTask {
 
         codeco();
         coarri();
-
-        cosecr();
-        vesdep();
-        coedor();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                cosecr();
+                vesdep();
+                coedor();
+            }
+        }).start();
 
         System.out.println(end);
         LOGGER.info(end);

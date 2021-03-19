@@ -53,10 +53,8 @@ public class JtVesdepExcutor {
                 return;
             }
 
-            Connection con = DbUtil.getConnection();
-
-            try (PreparedStatement psTotal = con.prepareStatement(SQLQueryConstants.SQL_VESDEP_LOG_TOTAL);
-                    PreparedStatement psCoarri = con.prepareStatement(SQLQueryConstants.SQL_VESDEP_COARRI_DEPARTURE_LIST)) {
+            try (PreparedStatement psTotal = DbUtil.getConnection().prepareStatement(SQLQueryConstants.SQL_VESDEP_LOG_TOTAL);
+                    PreparedStatement psCoarri = DbUtil.getConnection().prepareStatement(SQLQueryConstants.SQL_VESDEP_COARRI_DEPARTURE_LIST)) {
 
                 psCoarri.setString(1, customer);
                 ResultSet rsCoarri = psCoarri.executeQuery();
@@ -131,14 +129,24 @@ public class JtVesdepExcutor {
 
     }
 
-    private static void logVesdep(String logId, String customer, String vesselCode, String voyage, String vesselIE) {
-        String insertSql = "insert into tc2_edi_vesdep_log"
-                + "  (evl_log_id, evl_cst_code, evl_vsl_code, evl_voyage, evl_vessel_ie)"
-                + "values"
-                + "  (?, ?, ?, ?, ?)";
-        Connection con = DbUtil.getConnection();
+    final static String SQL_VESDEP_LOG_INSERT = "insert into tc2_edi_vesdep_log"
+            + "  (evl_log_id, evl_cst_code, evl_vsl_code, evl_voyage, evl_vessel_ie)"
+            + "values"
+            + "  (?, ?, ?, ?, ?)";
+    final static Connection con = DbUtil.getConnection();
+    static PreparedStatement ps;
 
-        try (PreparedStatement ps = con.prepareStatement(insertSql)) {
+    static {
+        try {
+            ps = con.prepareStatement(SQL_VESDEP_LOG_INSERT);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private static void logVesdep(String logId, String customer, String vesselCode, String voyage, String vesselIE) {
+
+        try {
 
             DbUtil.setAutoCommit(con, false);
 

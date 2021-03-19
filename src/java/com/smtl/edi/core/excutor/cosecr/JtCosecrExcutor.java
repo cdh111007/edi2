@@ -53,10 +53,8 @@ public class JtCosecrExcutor {
                 return;
             }
 
-            Connection con = DbUtil.getConnection();
-
-            try (PreparedStatement psTotal = con.prepareStatement(SQLQueryConstants.SQL_COSECR_LOG_TOTAL);
-                    PreparedStatement psCoarri = con.prepareStatement(SQLQueryConstants.SQL_COSECR_COARRI_END_LIST)) {
+            try (PreparedStatement psTotal = DbUtil.getConnection().prepareStatement(SQLQueryConstants.SQL_COSECR_LOG_TOTAL);
+                    PreparedStatement psCoarri = DbUtil.getConnection().prepareStatement(SQLQueryConstants.SQL_COSECR_COARRI_END_LIST)) {
 
                 psCoarri.setString(1, customer);
                 ResultSet rsCoarri = psCoarri.executeQuery();
@@ -123,14 +121,24 @@ public class JtCosecrExcutor {
 
     }
 
-    private static void logCosecr(String logId, String customer, String vesselCode, String voyage, String vesselIE) {
-        String insertSql = "insert into tc2_edi_cosecr_log"
-                + "  (ecl_log_id, ecl_cst_code, ecl_vsl_code, ecl_voyage, ecl_vessel_ie)"
-                + "values"
-                + "  (?, ?, ?, ?, ?)";
-        Connection con = DbUtil.getConnection();
+    final static String SQL_COSECR_LOG_INSERT = "insert into tc2_edi_cosecr_log"
+            + "  (ecl_log_id, ecl_cst_code, ecl_vsl_code, ecl_voyage, ecl_vessel_ie)"
+            + "values"
+            + "  (?, ?, ?, ?, ?)";
+    final static Connection con = DbUtil.getConnection();
+    static PreparedStatement ps;
 
-        try (PreparedStatement ps = con.prepareStatement(insertSql);) {
+    static {
+        try {
+            ps = con.prepareStatement(SQL_COSECR_LOG_INSERT);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private static void logCosecr(String logId, String customer, String vesselCode, String voyage, String vesselIE) {
+
+        try {
 
             DbUtil.setAutoCommit(con, false);
 
