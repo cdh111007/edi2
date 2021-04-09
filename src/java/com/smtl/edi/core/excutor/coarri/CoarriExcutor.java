@@ -325,7 +325,11 @@ public class CoarriExcutor {
         JtXxzxCoarri.SEG10 seg10 = coarri.new SEG10();
 
         seg10.setVesselCode(rsVsl.getString("vessel_code"));
-        seg10.setVesselName(rsVsl.getString("vessel_namec"));
+        if ("ZGXL".equalsIgnoreCase(customer)) {
+            seg10.setVesselName(rsVsl.getString("vessel_namec"));
+        } else {
+            seg10.setVesselName(rsVsl.getString("vessel_code"));
+        }
         seg10.setVoyage(rsVsl.getString("voyage"));
         seg10.setCountryCode(rsVsl.getString("country_code"));
         seg10.setLinerType(rsVsl.getString("liner_id"));
