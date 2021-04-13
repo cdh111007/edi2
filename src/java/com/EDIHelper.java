@@ -300,8 +300,9 @@ public class EDIHelper {
 
             ResultSet rs = PS_LAST_CREATE_TIME_WITH_INTERVAL_SECONDS.executeQuery();
             if (rs.next()) {
-                LOGGER.info("找到" + customer + "-" + msgType + "上次的报文创建时间：" + DatetimeUtil.format(rs.getString("last_time"), DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
-                return rs.getString("last_time");
+                String lastTime = rs.getString("last_time");
+                LOGGER.info("找到" + customer + "-" + msgType + "上次的报文创建时间：" + DatetimeUtil.format(lastTime, DatetimeUtil.YYYY_MM_DD_HH_MM_SS));
+                return lastTime;
             } else {
                 LOGGER.info("没有找到" + customer + "-" + msgType + "上次的报文创建时间，取前一天时间为开始时间");
                 return DatetimeUtil.format(DatetimeUtil.yesterday(), DatetimeUtil.YYYYMMDDHHMMSS);
