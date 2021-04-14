@@ -33,7 +33,7 @@ import com.smtl.edi.vo.DateRange;
  * @author nm
  */
 public class UnCodecoExcutor {
-
+    
     final static Logger LOGGER = Logger.getLogger(UnCodecoExcutor.class);
 
     /**
@@ -44,25 +44,25 @@ public class UnCodecoExcutor {
      * @param ctnNos
      */
     public static void process(String customer, DateRange range, boolean redo, String... ctnNos) {
-
+        
         String sqlGateIn = SQLQueryConstants.SQL_GATE_IN_UN;
         String sqlGateOut = SQLQueryConstants.SQL_GATE_OUT_UN;
-
+        
         if (ValidationUtil.isValid(ctnNos)) {
             sqlGateIn = sqlGateIn + "and ctn_no in(" + buildSqlInClause(ctnNos) + ") ";
             sqlGateOut = sqlGateOut + "and ctn_no in(" + buildSqlInClause(ctnNos) + ") ";
         }
-
+        
         customer = customer.toUpperCase();
-
+        
         try {
-
+            
             String[] jobTypes = {"GATE-OUT REPORT", "GATE-IN REPORT"};
-
+            
             PS_CODECO_CUSTOMER.setString(1, customer);
             PS_CODECO_CUSTOMER.setString(2, "CODECO");
             ResultSet rsCust = PS_CODECO_CUSTOMER.executeQuery();
-
+            
             String sender, receiver;
             if (rsCust.next()) {
                 sender = rsCust.getString("cst_sender");
@@ -70,22 +70,22 @@ public class UnCodecoExcutor {
             } else {
                 return;
             }
-
+            
             Connection con = DbUtil.getConnection();
-
+            
             for (int i = 0; i < jobTypes.length; i++) {
-
+                
                 List<MsgCtnDetailLog> logs = new LinkedList<>();
-
+                
                 String logId = String.valueOf(EDIHelper.getLogSeq());
-
+                
                 PreparedStatement psCtn = null;
                 if (jobTypes[i].contains("GATE-OUT")) {
                     psCtn = con.prepareStatement(sqlGateOut);
                 } else {
                     psCtn = con.prepareStatement(sqlGateIn);
                 }
-
+                
                 UnCodeco codeco = new UnCodeco();
 
                 //UNB
@@ -95,7 +95,7 @@ public class UnCodecoExcutor {
                 unb.setDateTimePreparation(DatetimeUtil.now(DatetimeUtil.YYYYMMDD_HHMM));
                 unb.setCtrlRef(logId);
                 codeco.UNB(unb);
-
+                
                 String refNo = DatetimeUtil.now(DatetimeUtil.YYYYMMDDHHMMSS);
 
                 //UNH
@@ -152,32 +152,32 @@ public class UnCodecoExcutor {
                     nad_cf.setPartyId("PIL");
                     codeco.NAD(nad_cf);
                 }
-
+                
                 psCtn.setString(1, customer);
                 psCtn.setString(2, jobTypes[i]);
                 psCtn.setString(3, range.getBegin());
                 psCtn.setString(4, range.getEnd());
-
+                
                 ResultSet rsCtn = psCtn.executeQuery();
-
+                
                 List<UnCodeco.EQD> eqds = new LinkedList<>();
-
+                
                 int gidId = 0;
-
+                
                 while (rsCtn.next()) {
-
+                    
                     String ctnStatus = rsCtn.getString("ctn_status");
                     String ctnCategory = rsCtn.getString("ctn_category");
-
+                    
                     if ("HLC".equalsIgnoreCase(customer)) {
-
+                        
                         UnCodeco.GIDS gids = codeco.new GIDS();
 
                         //危险品或温控箱
                         if ("Y".equalsIgnoreCase(rsCtn.getString("hazard_flag"))
                                 || "Y".equalsIgnoreCase(rsCtn.getString("reefer_flag"))) {
                             gidId++;
-
+                            
                             UnCodeco.GIDS.GID gid = codeco.new GIDS().new GID();
                             gid.setGidId(String.valueOf(gidId));
                             gids.GID(gid);
@@ -188,7 +188,7 @@ public class UnCodecoExcutor {
                             UnCodeco.GIDS.TMP tmp_ = codeco.new GIDS().new TMP();
                             tmp_.setTmpVal(rsCtn.getString("temperature_setting"));
                             gids.TMP(tmp_);
-
+                            
                             UnCodeco.GIDS.SGP sgp = codeco.new GIDS().new SGP();
                             sgp.setCtnNo(rsCtn.getString("ctn_no"));
                             gids.SGP(sgp);
@@ -200,9 +200,9 @@ public class UnCodecoExcutor {
                             dgs.setDgsCode(rsCtn.getString("undg_no"));
                             gids.DGS(dgs);
                         }
-
+                        
                         codeco.getGids().add(gids);
-
+                        
                     }
 
                     //EQD
@@ -211,7 +211,7 @@ public class UnCodecoExcutor {
                     eqd.setEqpSizeType(rsCtn.getString("ctn_size") + rsCtn.getString("ctn_type"));
                     eqd.setEqpStatus(ctnCategory);
                     eqd.setEfIndicator("E".equals(ctnStatus) ? "4" : "5");
-
+                    
                     String bnbmfg = "BM";
                     if ("COS".equalsIgnoreCase(customer)) {
                         if (StringUtil.isNotEmpty(ctnStatus) && StringUtil.isNotEmpty(ctnCategory)) {
@@ -222,7 +222,7 @@ public class UnCodecoExcutor {
                             }
                         }
                     }
-
+                    
                     String billNo = rsCtn.getString("bill_no");
                     if ("HMM".equalsIgnoreCase(customer)) {
                         if (StringUtil.blankIfEmpty(billNo).length() == 16) {
@@ -348,11 +348,11 @@ public class UnCodecoExcutor {
                     }
 
                     //DAM
-                    if (!"HAS".equalsIgnoreCase(customer) && "Y".equalsIgnoreCase(rsCtn.getString("damage_flag"))) {
+                    if (!customer.startsWith("HAS") && "Y".equalsIgnoreCase(rsCtn.getString("damage_flag"))) {
                         UnCodeco.EQD.DAM dam = codeco.new EQD().new DAM();
                         eqd.DAM(dam);
                     }
-
+                    
                     if ("HLC".equalsIgnoreCase(customer) && "F".equals(ctnStatus)) {
                         UnCodeco.EQD.TDT tdt = codeco.new EQD().new TDT();
                         tdt.setRefNo(rsCtn.getString("vessel_code") + StringUtil.blankIfEmpty(rsCtn.getString("voyage")));
@@ -365,22 +365,22 @@ public class UnCodecoExcutor {
                         nad_.setPartyId(rsCtn.getString("ctn_operator_code"));
                         eqd.NAD(nad_);
                     }
-
+                    
                     eqds.add(eqd);
-
+                    
                     MsgCtnDetailLog log = new MsgCtnDetailLog();
-
+                    
                     log.setCustomer(customer);
                     log.setMsgName(jobTypes[i]);
                     log.setMsgType("codeco");
                     log.setCtnNo(rsCtn.getString("ctn_no"));
                     log.setInQuayTime(rsCtn.getString("in_yard_time") == null ? null : DatetimeUtil.toTimestamp(DatetimeUtil.toCalendar(rsCtn.getString("in_yard_time"))));
                     log.setOutQuayTime(rsCtn.getString("out_yard_time") == null ? null : DatetimeUtil.toTimestamp(DatetimeUtil.toCalendar(rsCtn.getString("out_yard_time"))));
-
+                    
                     logs.add(log);
-
+                    
                 }
-
+                
                 codeco.setEqds(eqds);
 
                 //CNT
@@ -396,9 +396,9 @@ public class UnCodecoExcutor {
                 UnCodeco.UNZ unz = codeco.new UNZ();
                 unz.setMsgRefNo(logId);
                 codeco.UNZ(unz);
-
+                
                 logId = String.valueOf(EDIHelper.getLogSeq());
-
+                
                 if (!eqds.isEmpty()) {
                     String report = codeco.toString().replaceAll("null", "");
                     System.out.println(report);
@@ -412,15 +412,15 @@ public class UnCodecoExcutor {
                 } else {
                     logSend(logId, customer, "codeco", "UN", "", "", redo);
                 }
-
+                
                 DbUtil.close(psCtn);
-
+                
             }
-
+            
         } catch (SQLException ex) {
             LOGGER.error(ExceptionUtil.getStackTraceAsString(ex));
             ExceptionNotifyTask.notify(ex, new String[]{customer, "codeco"});
         }
-
+        
     }
 }
