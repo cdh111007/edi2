@@ -348,7 +348,7 @@ public class UnCodecoExcutor {
                     }
 
                     //DAM
-                    if ("Y".equalsIgnoreCase(rsCtn.getString("damage_flag"))) {
+                    if (!"HAS".equalsIgnoreCase(customer) && "Y".equalsIgnoreCase(rsCtn.getString("damage_flag"))) {
                         UnCodeco.EQD.DAM dam = codeco.new EQD().new DAM();
                         eqd.DAM(dam);
                     }
