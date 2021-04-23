@@ -201,6 +201,8 @@ public class HhwlCodecoExcutor {
                             vessel = "HH1";
                         } else if (billNo.startsWith("XJ") || billNo.startsWith("HX")) {
                             vessel = "XJ ";//最后一个空格必须要
+                        }else if (billNo.startsWith("HF") || billNo.startsWith("FZY")){
+                            vessel = "FZY ";
                         }
                     }
 

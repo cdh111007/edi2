@@ -1,9 +1,6 @@
 package com.smtl;
 
-import com.smtl.edi.util.DatetimeUtil;
 import com.smtl.edi.util.DbUtil;
-import static com.smtl.edi.util.StringUtil.buildSqlInClause;
-import com.smtl.edi.vo.VesselVoyage;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -20,37 +17,23 @@ public class Test {
 
         Connection con = DbUtil.getConnection();
 
-        String test = "{ call sp_tc2_edi_vsl_voy_day_diff(?,?)}";
+        String test = "{ call sp_tc2_rpt_opened_bil(?,?,?,?,?,?)}";
 
         try (CallableStatement call = con.prepareCall(test)) {
 
-            for (int i = 1; i < 3; i++) {
+            call.setString(1, "2021-03-02");
+            call.setString(2, "2021-03-03");
+            call.setString(3, null);
+            call.setString(4, null);
+            call.setString(5, null);
+            call.registerOutParameter(6, oracle.jdbc.OracleTypes.CURSOR);
 
-                System.out.println((i) + "------------" + DatetimeUtil.format(DatetimeUtil.daysAgo(i)) + "----------------");
+            call.execute();
 
-                call.setInt(1, i);
-                call.registerOutParameter(2, oracle.jdbc.OracleTypes.CURSOR);
+            ResultSet rs = (ResultSet) call.getObject(6);
 
-                call.execute();
-
-                ResultSet rs = (ResultSet) call.getObject(2);
-
-                while (rs.next()) {
-                    System.out.println(rs.getString("vessel_namec") + "/" + rs.getString("voyage"));
-                    EDIRedo.coarriByVslNameAndVoyage0("xxzx", new VesselVoyage(rs.getString("vessel_namec"), rs.getString("voyage")));
-//                    List<String> users = getCustomerCodes("un");
-//                    users.addAll(getCustomerCodes("jt"));
-//                    users.add("xxzx");
-//                    //实时发送报文的不按船名航次发
-//                    for (String user : users) {
-//                        if (isSatisfiedAct(user)) {
-//                            continue;
-//                        }
-//                        System.out.println(user);
-//                        EDIRedo.coarriByVslNameAndVoyage0(user, rs.getString("vessel_namec"), rs.getString("voyage"));
-//                    }
-                }
-
+            while (rs.next()) {
+                System.out.println(rs.getString("username") + "/" + rs.getString("itemtotal"));
             }
 
             con.close();
@@ -71,13 +54,12 @@ public class Test {
 //
 //        System.out.println(DatetimeUtil.format(begin, DatetimeUtil.YYYYMMDDHHMMSS));
 //        System.out.println(DatetimeUtil.format(end, DatetimeUtil.YYYYMMDDHHMMSS));
-//        test();
+        test();
 //        codeco();
 //        coarri();
-        String[] s = {"1", "2", "3"};
+//        String[] s = {"1", "2", "3"};
 
-        System.out.println(buildSqlInClause(s));
-
+//        System.out.println(buildSqlInClause(s));
     }
 
 }
