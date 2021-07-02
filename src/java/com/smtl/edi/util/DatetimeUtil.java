@@ -19,6 +19,17 @@ import org.springframework.util.Assert;
 public class DatetimeUtil {
 
     /**
+     * 前后相差多少分钟
+     *
+     * @param end
+     * @param begin
+     * @return
+     */
+    public static int minutes(String end, String begin) {
+        return Long.valueOf((toTimestamp(toDate(end)).getTime() - toTimestamp(toDate(begin)).getTime()) / (1000 * 60)).intValue();
+    }
+
+    /**
      * 默认构造方法
      */
     private DatetimeUtil() {
@@ -46,11 +57,11 @@ public class DatetimeUtil {
                 date = date + String.format("%1$0" + (14 - date.length()) + "d", 0);
             }
             //将上面14位数字用如下的格式组装成yyyy-MM-dd HH:mm:ss
-            date = date.substring(0, 4) + "-" 
-                    + date.substring(4, 6) + "-" 
+            date = date.substring(0, 4) + "-"
+                    + date.substring(4, 6) + "-"
                     + date.substring(6, 8) + " "
-                    + date.substring(8, 10) + ":" 
-                    + date.substring(10, 12) + ":" 
+                    + date.substring(8, 10) + ":"
+                    + date.substring(10, 12) + ":"
                     + date.substring(12, 14);
 
         }
@@ -676,8 +687,10 @@ public class DatetimeUtil {
         System.out.println(DatetimeUtil.format(DatetimeUtil.toDate("20200101", new String[0]), YYYY_MM_DD_HH_MM_SS));
         System.out.println(DatetimeUtil.format(DatetimeUtil.toDate("20200101"), YYYYMMDDHHMMSS));
         System.out.println(DatetimeUtil.format("20200101002311", YYYY_MM_DD_HH_MM_SS));
-        
+
         System.out.println(DatetimeUtil.daysToNow("20200101002311"));
+
+        System.out.println(DatetimeUtil.minutes("20200101002311", "20200101002011"));
 
     }
     public static final String HHMMMSS = "HHmmss";

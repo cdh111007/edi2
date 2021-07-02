@@ -245,7 +245,7 @@ public class TaskFacade {
      */
     public static void coedor() {
 
-        if (DatetimeUtil.hour() == 8 && (DatetimeUtil.minute() >= 0 && DatetimeUtil.minute() <= 15)) {
+        if (DatetimeUtil.hour() == 8) {
             List<String> customers = getCustomerCodesByEDIType("JT");
 
             for (String customer : customers) {
@@ -255,6 +255,10 @@ public class TaskFacade {
                 String begin = getLastCreateTimeWithIntervalSeconds(customer, "COEDOR", "JT");
                 begin = DatetimeUtil.format(begin, DatetimeUtil.YYYY_MM_DD_HH_MM_SS);
                 String end = DatetimeUtil.now(DatetimeUtil.YYYY_MM_DD_HH_MM_SS);
+
+                if (DatetimeUtil.minutes(end, begin) < 120) {
+                    continue;
+                }
 
                 print("写COEDOR报文数据..." + customer + "\t" + begin + " - " + end);
                 JtCoedorExcutor.doHandle(customer);

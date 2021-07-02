@@ -86,7 +86,7 @@ public class JtCoedorExcutor {
                     seg50.setOutboundVoyage(rsCtn.getString("outbound_voyage"));
                     seg50.setBillNo(rsCtn.getString("bl_no"));
                     seg50.setDischargeTime(rsCtn.getString("discharge_time"));
-                    seg50.setInGateTime(rsCtn.getString("inter_yard_time"));
+                    seg50.setInGateTime(rsCtn.getString("in_yard_time"));
                     seg50.setVesselIE(rsCtn.getString("vessel_ie"));
 
                     seg5x.SEG50(seg50);
